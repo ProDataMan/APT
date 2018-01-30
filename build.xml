@@ -1,0 +1,170 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<project name='APT' default='test' basedir='.'>
+	<property name='src' value='${basedir}/src' />
+	<property name='test' value='${basedir}/test' />
+	<property name='build' value='${basedir}/bin2' />
+	<property name='results' value='${basedir}/results' />
+	<property name='reports' value='${basedir}/reports' />
+	<property name='packages' value='${basedir}/packages' />
+	
+	<property name='cucumber-jvm.repo' value='https://oss.sonatype.org/content/repositories/releases/info/cukes' />
+	<property name='cucumber-jvm.version' value='1.2.4' />
+	<property name='cucumber-html.version' value='0.2.3' />
+	<property name='cucumber-jvm-deps.version' value='1.0.5' />
+	<property name='gherkin.version' value='2.12.2' />
+	<property name='junit.repo' value='https://oss.sonatype.org/content/repositories/releases/junit/junit' />
+	<property name='junit.version' value='4.12' />
+	<property name='fitnesse.repo' value='http://search.maven.org/remotecontent?filepath=org/fitnesse/fitnesse' />
+	<property name='fitnesse.version' value='20150814' />
+	<property name='mockito.repo' value='http://repo2.maven.org/maven2/org/mockito/mockito-all' />
+	<property name='mockito.version' value='1.9.5' />
+	<property name='ucanaccess.repo' value='http://downloads.sourceforge.net/project/ucanaccess' />
+	<property name='ucanaccess.version' value='4.0.2' />
+	<property name='commons-lang.version' value='2.6' />
+	<property name='commons-logging.version' value='1.1.1' />
+	<property name='jackcess.version' value='2.1.6' />
+	<property name='guice.repo' value='http://search.maven.org/remotecontent?filepath=com/google/inject/guice' />
+	<property name='guice.version' value='4.1.0' />
+	<property name='guice.dependencies.repo' value='https://github.com/google/guice/raw/master/lib' />
+	<property name='checkstyle.repo' value='http://downloads.sourceforge.net/project/checkstyle/checkstyle' />
+	<property name='checkstyle.version' value='7.0' />
+	
+	<path id='project.classpath'>
+		<fileset dir='${packages}'>
+			<include name='*.jar' />
+		</fileset>
+		<pathelement path='C:/Microsoft JDBC Driver 6.0 for SQL Server/sqljdbc_6.0/enu/sqljdbc4.jar' />
+		<pathelement path='C:/oraclexe/app/oracle/product/11.2.0/server/jdbc/lib/ojdbc6.jar' />
+		<pathelement path='${build}' />
+	</path>
+	
+	<target name='clean'>
+		<delete dir='${build}' />
+		<delete dir='${results}' />
+		<delete dir='${reports}' />
+	</target>
+	
+	<target name='build'>
+		<mkdir dir='${build}' />
+		<javac srcdir='${src}' destdir='${build}' includeAntRuntime='false'>
+			<classpath refid='project.classpath' />
+		</javac>
+		<javac srcdir='${test}' destdir='${build}' includeAntRuntime='false'>
+			<classpath refid='project.classpath' />
+		</javac>
+	</target>
+	
+	<target name='test' depends='build'>
+		<!-- Unit tests -->
+		<mkdir dir='${results}\unit' />
+		<junit haltonfailure='false' failureproperty='tests.failed' printsummary='on'>
+			<classpath refid='project.classpath' />
+			<batchtest todir='${results}\unit'>
+				<fileset dir='${build}'>
+					<include name='**/*Test.class' />
+				</fileset>
+				<formatter type='xml' />
+			</batchtest>
+		</junit>
+		<fail if='tests.failed'>
+			One or more unit tests failed - check the output.
+		</fail>
+		
+		<!-- Acceptance tests -->
+		<mkdir dir='${results}\cucumber' />
+		<mkdir dir='${reports}\cucumber' />
+		<java classname='cucumber.api.cli.Main' fork='true' failonerror='false' resultproperty='cucumber.exitstatus'>
+			<classpath refid='project.classpath' />
+			<arg value='-m' />
+	            <arg value='--plugin' />
+	            <arg value='junit:${results}\cucumber\cucumber-junit-report.xml' />
+	            <arg value='--plugin' />
+	            <arg value='html:${reports}\cucumber-jvm' />
+			<arg value='--glue' />
+			<arg value='cucumber.stepdefs' />
+			<arg value='${test}\cucumber\features' />
+		</java>
+		<fail>
+			<condition>
+				<not>
+					<equals arg1='${cucumber.exitstatus}' arg2='0' />
+				</not>
+			</condition>
+			One or more acceptance tests failed - check the output.
+		</fail>
+	</target>
+	
+	<target name='report'>
+		<mkdir dir='${reports}\all' />
+		<junitreport todir='${results}'>
+			<fileset dir='${results}'>
+				<include name='unit/**/*.xml' />
+				<include name='cucumber/**/*.xml' />
+			</fileset>
+			<report format='frames' todir='${reports}\all' />
+		</junitreport>
+	</target>
+
+	<target name='style'>
+		<mkdir dir='${results}' />
+		<taskdef resource='com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties'
+			 classpath='${packages}\checkstyle-all.jar' />
+		<checkstyle config='${basedir}\checkstyle.xml' failOnViolation='false'>
+			<fileset dir='${src}' includes='**' />
+			<fileset dir='${test}' includes='**' />
+			<classpath refid='project.classpath' />
+			<formatter type='xml' toFile='${results}\checkstyle-result.xml' />
+		</checkstyle>
+	</target>
+
+	<target name='download'>
+		<mkdir dir='${packages}' />
+		<get src='${cucumber-jvm.repo}/cucumber-core/${cucumber-jvm.version}/cucumber-core-${cucumber-jvm.version}.jar'
+			dest='${packages}/cucumber-core.jar' />
+		<get src='${cucumber-jvm.repo}/cucumber-java/${cucumber-jvm.version}/cucumber-java-${cucumber-jvm.version}.jar'
+			dest='${packages}/cucumber-java.jar' />
+		<get src='${cucumber-jvm.repo}/cucumber-junit/${cucumber-jvm.version}/cucumber-junit-${cucumber-jvm.version}.jar'
+			dest='${packages}/cucumber-junit.jar' />
+		<get src='${cucumber-jvm.repo}/cucumber-html/${cucumber-html.version}/cucumber-html-${cucumber-html.version}.jar'
+			dest='${packages}/cucumber-html.jar' />
+		<get src='${cucumber-jvm.repo}/cucumber-jvm-deps/${cucumber-jvm-deps.version}/cucumber-jvm-deps-${cucumber-jvm-deps.version}.jar'
+			dest='${packages}/cucumber-jvm-deps.jar' />
+		<get src='${cucumber-jvm.repo}/gherkin/${gherkin.version}/gherkin-${gherkin.version}.jar'
+			dest='${packages}/gherkin.jar' />
+		<get src='${junit.repo}/${junit.version}/junit-${junit.version}.jar'
+			dest='${packages}/junit.jar' />
+		<get src='${fitnesse.repo}/${fitnesse.version}/fitnesse-${fitnesse.version}.jar'
+			dest='${packages}/fitnesse.jar' />
+		<get src='${mockito.repo}/${mockito.version}/mockito-all-${mockito.version}.jar'
+			dest='${packages}/mockito-all.jar' />
+		<get src='${checkstyle.repo}/${checkstyle.version}/checkstyle-${checkstyle.version}-all.jar?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fcheckstyle%2Ffiles%2Fcheckstyle%2F${checkstyle.version}%2F&amp;ts=1467536951&amp;use_mirror=tenet'
+			dest='${packages}/checkstyle-all.jar' />
+		
+		<get src='${ucanaccess.repo}/UCanAccess-${ucanaccess.version}-bin.zip?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fucanaccess%2Ffiles%2F&amp;ts=1502654413&amp;use_mirror=superb-sea2'
+			dest='${packages}/ucanaccess.zip' />
+		<unzip src='${packages}/ucanaccess.zip' dest='${packages}'>
+			<patternset>
+				<include name='**/*.jar' />
+			</patternset>
+		</unzip>
+		<delete file='${packages}/ucanaccess.zip' />
+		<copy file='${packages}/UCanAccess-${ucanaccess.version}-bin/UCanAccess-${ucanaccess.version}.jar'
+			tofile='${packages}/UCanAccess.jar' />
+		<copy file='${packages}/UCanAccess-${ucanaccess.version}-bin/lib/commons-lang-${commons-lang.version}.jar'
+			tofile='${packages}/commons-lang.jar' />
+		<copy file='${packages}/UCanAccess-${ucanaccess.version}-bin/lib/commons-logging-${commons-logging.version}.jar'
+			tofile='${packages}/commons-logging.jar' />
+		<copy file='${packages}/UCanAccess-${ucanaccess.version}-bin/lib/hsqldb.jar'
+			tofile='${packages}/hsqldb.jar' />
+		<copy file='${packages}/UCanAccess-${ucanaccess.version}-bin/lib/jackcess-${jackcess.version}.jar'
+			tofile='${packages}/jackcess.jar' />
+		<delete dir='${packages}/UCanAccess-${ucanaccess.version}-bin' />
+		
+		<get src='${guice.repo}/${guice.version}/guice-${guice.version}.jar'
+			dest='${packages}/guice.jar' />
+		<get src='${guice.dependencies.repo}/aopalliance.jar'
+			dest='${packages}/aopalliance.jar' />
+		<get src='${guice.dependencies.repo}/javax.inject.jar'
+			dest='${packages}/javax.inject.jar' />
+	</target>
+</project>

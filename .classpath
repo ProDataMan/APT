@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="packages/cucumber-java.jar"/>
+	<classpathentry kind="lib" path="packages/junit.jar"/>
+	<classpathentry kind="lib" path="packages/mockito-all.jar"/>
+	<classpathentry kind="lib" path="packages/fitnesse.jar"/>
+	<classpathentry kind="lib" path="packages/guice.jar"/>
+	<classpathentry kind="lib" path="packages/UCanAccess.jar"/>
+	<classpathentry kind="lib" path="packages/jackcess.jar"/>
+	<classpathentry kind="lib" path="packages/commons-lang.jar"/>
+	<classpathentry kind="lib" path="packages/hsqldb.jar"/>
+	<classpathentry kind="lib" path="packages/commons-logging.jar"/>
+	<classpathentry kind="lib" path="packages/cucumber-core.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
